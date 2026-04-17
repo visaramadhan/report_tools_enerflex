@@ -31,6 +31,7 @@ export default function AdminToolsScreen({
   const [tools, setTools] = useState<Tool[]>([]);
   const [search, setSearch] = useState('');
   const [selectedCondition, setSelectedCondition] = useState<'Good' | 'Bad' | null>(null);
+  const [filterOpen, setFilterOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [apiBaseUrl, setApiBaseUrl] = useState('');
@@ -98,6 +99,8 @@ export default function AdminToolsScreen({
     if (!selectedCondition) return tools;
     return tools.filter((t) => (t.condition || 'Good') === selectedCondition);
   }, [tools, selectedCondition]);
+
+  const selectedConditionLabel = selectedCondition === 'Good' ? 'Good' : selectedCondition === 'Bad' ? 'Bad' : 'Semua';
 
   const pickRepairPhoto = useCallback(async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -199,18 +202,10 @@ export default function AdminToolsScreen({
         </Pressable>
       </View>
       <TextInput value={search} onChangeText={setSearch} placeholder="Cari nama atau kode" style={styles.input} placeholderTextColor={colors.muted} />
-      <Text style={styles.filterLabel}>Kondisi</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.subCatScroll}>
-        <Pressable style={[styles.chip, !selectedCondition && styles.chipActive]} onPress={() => setSelectedCondition(null)}>
-          <Text style={[styles.chipText, !selectedCondition && styles.chipTextActive]}>Semua</Text>
-        </Pressable>
-        <Pressable style={[styles.chip, selectedCondition === 'Good' && styles.chipGoodActive]} onPress={() => setSelectedCondition('Good')}>
-          <Text style={[styles.chipText, selectedCondition === 'Good' && styles.chipTextActive]}>Good</Text>
-        </Pressable>
-        <Pressable style={[styles.chip, selectedCondition === 'Bad' && styles.chipBadActive]} onPress={() => setSelectedCondition('Bad')}>
-          <Text style={[styles.chipText, selectedCondition === 'Bad' && styles.chipTextActive]}>Bad</Text>
-        </Pressable>
-      </ScrollView>
+      <Pressable style={styles.filterToggle} onPress={() => setFilterOpen(true)}>
+        <Text style={styles.filterToggleLabel}>Filter</Text>
+        <Text style={styles.filterToggleValue}>Kondisi: {selectedConditionLabel}</Text>
+      </Pressable>
       <FlatList
         data={filteredTools}
         keyExtractor={(i) => i._id}
@@ -344,6 +339,46 @@ export default function AdminToolsScreen({
           </View>
         </View>
       </Modal>
+
+      <Modal visible={filterOpen} transparent onRequestClose={() => setFilterOpen(false)} animationType="fade">
+        <Pressable style={styles.filterOverlay} onPress={() => setFilterOpen(false)}>
+          <Pressable style={styles.filterCard} onPress={() => undefined}>
+            <Text style={styles.filterTitle}>Filter Kondisi</Text>
+            <View style={styles.filterChips}>
+              <Pressable
+                style={[styles.chip, !selectedCondition && styles.chipActive]}
+                onPress={() => {
+                  setSelectedCondition(null);
+                  setFilterOpen(false);
+                }}
+              >
+                <Text style={[styles.chipText, !selectedCondition && styles.chipTextActive]}>Semua</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.chip, selectedCondition === 'Good' && styles.chipGoodActive]}
+                onPress={() => {
+                  setSelectedCondition('Good');
+                  setFilterOpen(false);
+                }}
+              >
+                <Text style={[styles.chipText, selectedCondition === 'Good' && styles.chipTextActive]}>Good</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.chip, selectedCondition === 'Bad' && styles.chipBadActive]}
+                onPress={() => {
+                  setSelectedCondition('Bad');
+                  setFilterOpen(false);
+                }}
+              >
+                <Text style={[styles.chipText, selectedCondition === 'Bad' && styles.chipTextActive]}>Bad</Text>
+              </Pressable>
+            </View>
+            <Pressable style={styles.filterCloseBtn} onPress={() => setFilterOpen(false)}>
+              <Text style={styles.filterCloseText}>Tutup</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -358,8 +393,23 @@ const baseStyles = StyleSheet.create({
   secondaryBtn: { flex: 1, borderWidth: 1, borderColor: 'rgba(42,53,71,0.12)', borderRadius: 12, paddingVertical: 10, alignItems: 'center', backgroundColor: '#fff' },
   secondaryText: { fontWeight: '900', color: '#0E5E7E' },
   input: { borderWidth: 1, borderColor: 'rgba(42,53,71,0.12)', borderRadius: 12, padding: 12, backgroundColor: '#fff', marginBottom: 12 },
-  filterLabel: { marginBottom: 6, color: '#6b7280', fontSize: 12, fontWeight: '800' },
-  subCatScroll: { flexDirection: 'row', paddingVertical: 4, marginBottom: 16 },
+  filterToggle: {
+    borderWidth: 1,
+    borderColor: 'rgba(42,53,71,0.12)',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: '#fff',
+    marginBottom: 12,
+  },
+  filterToggleLabel: { fontSize: 12, color: '#6b7280', fontWeight: '900' },
+  filterToggleValue: { marginTop: 2, fontSize: 14, color: '#111827', fontWeight: '800' },
+  filterOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'center', alignItems: 'center', padding: 16 },
+  filterCard: { width: '100%', maxWidth: 520, backgroundColor: '#fff', borderRadius: 16, padding: 16 },
+  filterTitle: { fontSize: 16, fontWeight: '900', color: '#111827', marginBottom: 12 },
+  filterChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  filterCloseBtn: { marginTop: 14, backgroundColor: '#0E5E7E', borderRadius: 12, paddingVertical: 10, alignItems: 'center' },
+  filterCloseText: { color: '#fff', fontWeight: '900' },
   chip: {
     paddingHorizontal: 14,
     paddingVertical: 10,
@@ -367,7 +417,6 @@ const baseStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(42,53,71,0.12)',
     backgroundColor: '#fff',
-    marginRight: 8,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 38,
