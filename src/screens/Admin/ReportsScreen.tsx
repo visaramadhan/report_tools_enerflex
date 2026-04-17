@@ -27,6 +27,7 @@ export default function AdminReportsScreen({ token, onCreateReport }: Props) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
   const [selectedCondition, setSelectedCondition] = useState<'Good' | 'Bad' | null>(null);
+  const [filterOpen, setFilterOpen] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Record<string, boolean>>({});
   const [dateFilterMode, setDateFilterMode] = useState<'day' | 'month'>('day');
@@ -169,6 +170,21 @@ export default function AdminReportsScreen({ token, onCreateReport }: Props) {
 
     return result;
   }, [reports, search, selectedCategory, selectedSubCategory, selectedCondition, dateFilterMode, startDay, endDay, startMonth, endMonth]);
+
+  const filterSummary = useMemo(() => {
+    const parts: string[] = [];
+    if (dateFilterMode === 'day') {
+      if (startDay) parts.push(`Dari ${startDay}`);
+      if (endDay) parts.push(`Sampai ${endDay}`);
+    } else {
+      if (startMonth) parts.push(`Dari ${startMonth}`);
+      if (endMonth) parts.push(`Sampai ${endMonth}`);
+    }
+    if (selectedCategory) parts.push(selectedCategory);
+    if (selectedSubCategory) parts.push(selectedSubCategory);
+    if (selectedCondition) parts.push(selectedCondition);
+    return parts.length ? parts.join(' • ') : 'Semua';
+  }, [dateFilterMode, endDay, endMonth, selectedCategory, selectedCondition, selectedSubCategory, startDay, startMonth]);
 
   const allFilteredSelected = useMemo(() => {
     if (!filteredReports.length) return false;
@@ -327,148 +343,19 @@ export default function AdminReportsScreen({ token, onCreateReport }: Props) {
           <Text style={styles.exportText}>{exportingPdf ? 'Mengekspor...' : 'Export PDF (Semua)'}</Text>
         </Pressable>
       </View>
-      
-      <View style={styles.filterSection}>
-        <TextInput
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Cari tools, teknisi, kategori..."
-          style={styles.searchInput}
-          placeholderTextColor={colors.muted}
-        />
 
-        <View style={styles.modeRow}>
-          <Pressable
-            style={[styles.modeBtn, dateFilterMode === 'day' && styles.modeBtnActive]}
-            onPress={() => setDateFilterMode('day')}
-          >
-            <Text style={[styles.modeText, dateFilterMode === 'day' && styles.modeTextActive]}>Filter Hari</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.modeBtn, dateFilterMode === 'month' && styles.modeBtnActive]}
-            onPress={() => setDateFilterMode('month')}
-          >
-            <Text style={[styles.modeText, dateFilterMode === 'month' && styles.modeTextActive]}>Filter Bulan</Text>
-          </Pressable>
-        </View>
+      <TextInput
+        value={search}
+        onChangeText={setSearch}
+        placeholder="Cari tools, teknisi, kategori..."
+        style={styles.searchInput}
+        placeholderTextColor={colors.muted}
+      />
 
-        {dateFilterMode === 'day' ? (
-          <View style={styles.dateRow}>
-            {Platform.OS === 'web' ? (
-              <View style={styles.dateInput}>
-                <input type="date" value={startDay} onChange={(e: any) => setStartDay(String(e?.target?.value || ''))} style={webControlStyle} />
-              </View>
-            ) : (
-              <TextInput value={startDay} onChangeText={setStartDay} placeholder="Dari (YYYY-MM-DD)" style={[styles.searchInput, styles.dateInput]} placeholderTextColor={colors.muted} />
-            )}
-            {Platform.OS === 'web' ? (
-              <View style={styles.dateInput}>
-                <input type="date" value={endDay} onChange={(e: any) => setEndDay(String(e?.target?.value || ''))} style={webControlStyle} />
-              </View>
-            ) : (
-              <TextInput value={endDay} onChangeText={setEndDay} placeholder="Sampai (YYYY-MM-DD)" style={[styles.searchInput, styles.dateInput]} placeholderTextColor={colors.muted} />
-            )}
-          </View>
-        ) : (
-          <View style={styles.dateRow}>
-            {Platform.OS === 'web' ? (
-              <View style={styles.dateInput}>
-                <select value={startMonth} onChange={(e: any) => setStartMonth(String(e?.target?.value || ''))} style={webControlStyle}>
-                  <option value="">Dari (Semua)</option>
-                  {monthOptions.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
-              </View>
-            ) : (
-              <TextInput value={startMonth} onChangeText={setStartMonth} placeholder="Dari (YYYY-MM)" style={[styles.searchInput, styles.dateInput]} placeholderTextColor={colors.muted} />
-            )}
-            {Platform.OS === 'web' ? (
-              <View style={styles.dateInput}>
-                <select value={endMonth} onChange={(e: any) => setEndMonth(String(e?.target?.value || ''))} style={webControlStyle}>
-                  <option value="">Sampai (Semua)</option>
-                  {monthOptions.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
-              </View>
-            ) : (
-              <TextInput value={endMonth} onChangeText={setEndMonth} placeholder="Sampai (YYYY-MM)" style={[styles.searchInput, styles.dateInput]} placeholderTextColor={colors.muted} />
-            )}
-          </View>
-        )}
-
-        <Text style={styles.filterLabel}>Kategori</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.subCatScroll}>
-          <Pressable
-            style={[styles.chip, !selectedCategory && styles.chipActive]}
-            onPress={() => {
-              setSelectedCategory(null);
-              setSelectedSubCategory(null);
-            }}
-          >
-            <Text style={[styles.chipText, !selectedCategory && styles.chipTextActive]}>Semua</Text>
-          </Pressable>
-          {categories.map((c) => (
-            <Pressable
-              key={c}
-              style={[styles.chip, selectedCategory === c && styles.chipActive]}
-              onPress={() => {
-                setSelectedCategory(c);
-                setSelectedSubCategory(null);
-              }}
-            >
-              <Text style={[styles.chipText, selectedCategory === c && styles.chipTextActive]}>
-                {c}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-
-        <Text style={styles.filterLabel}>Sub Kategori</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.subCatScroll}>
-          <Pressable
-            style={[styles.chip, !selectedSubCategory && styles.chipActive]}
-            onPress={() => setSelectedSubCategory(null)}
-          >
-            <Text style={[styles.chipText, !selectedSubCategory && styles.chipTextActive]}>Semua</Text>
-          </Pressable>
-          {subCategoryOptions.map((sub) => (
-            <Pressable
-              key={sub}
-              style={[styles.chip, selectedSubCategory === sub && styles.chipActive]}
-              onPress={() => setSelectedSubCategory(sub)}
-            >
-              <Text style={[styles.chipText, selectedSubCategory === sub && styles.chipTextActive]}>
-                {sub}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-
-        <Text style={styles.filterLabel}>Kondisi</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.subCatScroll}>
-          <Pressable style={[styles.chip, !selectedCondition && styles.chipActive]} onPress={() => setSelectedCondition(null)}>
-            <Text style={[styles.chipText, !selectedCondition && styles.chipTextActive]}>Semua</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.chip, selectedCondition === 'Good' && styles.chipGoodActive]}
-            onPress={() => setSelectedCondition('Good')}
-          >
-            <Text style={[styles.chipText, selectedCondition === 'Good' && styles.chipTextActive]}>Good</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.chip, selectedCondition === 'Bad' && styles.chipBadActive]}
-            onPress={() => setSelectedCondition('Bad')}
-          >
-            <Text style={[styles.chipText, selectedCondition === 'Bad' && styles.chipTextActive]}>Bad</Text>
-          </Pressable>
-        </ScrollView>
-      </View>
+      <Pressable style={styles.filterToggle} onPress={() => setFilterOpen(true)}>
+        <Text style={styles.filterToggleLabel}>Filter</Text>
+        <Text style={styles.filterToggleValue}>{filterSummary}</Text>
+      </Pressable>
 
       <FlatList
         data={filteredReports}
@@ -534,6 +421,151 @@ export default function AdminReportsScreen({ token, onCreateReport }: Props) {
           )}
         </View>
       </Modal>
+
+      <Modal visible={filterOpen} transparent onRequestClose={() => setFilterOpen(false)} animationType="fade">
+        <Pressable style={styles.filterOverlay} onPress={() => setFilterOpen(false)}>
+          <Pressable style={styles.filterCard} onPress={() => undefined}>
+            <Text style={styles.filterTitle}>Filter</Text>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <View style={styles.modeRow}>
+                <Pressable
+                  style={[styles.modeBtn, dateFilterMode === 'day' && styles.modeBtnActive]}
+                  onPress={() => setDateFilterMode('day')}
+                >
+                  <Text style={[styles.modeText, dateFilterMode === 'day' && styles.modeTextActive]}>Filter Hari</Text>
+                </Pressable>
+                <Pressable
+                  style={[styles.modeBtn, dateFilterMode === 'month' && styles.modeBtnActive]}
+                  onPress={() => setDateFilterMode('month')}
+                >
+                  <Text style={[styles.modeText, dateFilterMode === 'month' && styles.modeTextActive]}>Filter Bulan</Text>
+                </Pressable>
+              </View>
+
+              {dateFilterMode === 'day' ? (
+                <View style={styles.dateRow}>
+                  {Platform.OS === 'web' ? (
+                    <View style={styles.dateInput}>
+                      <input type="date" value={startDay} onChange={(e: any) => setStartDay(String(e?.target?.value || ''))} style={webControlStyle} />
+                    </View>
+                  ) : (
+                    <TextInput value={startDay} onChangeText={setStartDay} placeholder="Dari (YYYY-MM-DD)" style={[styles.searchInput, styles.dateInput]} placeholderTextColor={colors.muted} />
+                  )}
+                  {Platform.OS === 'web' ? (
+                    <View style={styles.dateInput}>
+                      <input type="date" value={endDay} onChange={(e: any) => setEndDay(String(e?.target?.value || ''))} style={webControlStyle} />
+                    </View>
+                  ) : (
+                    <TextInput value={endDay} onChangeText={setEndDay} placeholder="Sampai (YYYY-MM-DD)" style={[styles.searchInput, styles.dateInput]} placeholderTextColor={colors.muted} />
+                  )}
+                </View>
+              ) : (
+                <View style={styles.dateRow}>
+                  {Platform.OS === 'web' ? (
+                    <View style={styles.dateInput}>
+                      <select value={startMonth} onChange={(e: any) => setStartMonth(String(e?.target?.value || ''))} style={webControlStyle}>
+                        <option value="">Dari (Semua)</option>
+                        {monthOptions.map((m) => (
+                          <option key={m} value={m}>
+                            {m}
+                          </option>
+                        ))}
+                      </select>
+                    </View>
+                  ) : (
+                    <TextInput value={startMonth} onChangeText={setStartMonth} placeholder="Dari (YYYY-MM)" style={[styles.searchInput, styles.dateInput]} placeholderTextColor={colors.muted} />
+                  )}
+                  {Platform.OS === 'web' ? (
+                    <View style={styles.dateInput}>
+                      <select value={endMonth} onChange={(e: any) => setEndMonth(String(e?.target?.value || ''))} style={webControlStyle}>
+                        <option value="">Sampai (Semua)</option>
+                        {monthOptions.map((m) => (
+                          <option key={m} value={m}>
+                            {m}
+                          </option>
+                        ))}
+                      </select>
+                    </View>
+                  ) : (
+                    <TextInput value={endMonth} onChangeText={setEndMonth} placeholder="Sampai (YYYY-MM)" style={[styles.searchInput, styles.dateInput]} placeholderTextColor={colors.muted} />
+                  )}
+                </View>
+              )}
+
+              <Text style={styles.filterLabel}>Kategori</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.subCatScroll}>
+                <Pressable
+                  style={[styles.chip, !selectedCategory && styles.chipActive]}
+                  onPress={() => {
+                    setSelectedCategory(null);
+                    setSelectedSubCategory(null);
+                  }}
+                >
+                  <Text style={[styles.chipText, !selectedCategory && styles.chipTextActive]}>Semua</Text>
+                </Pressable>
+                {categories.map((c) => (
+                  <Pressable
+                    key={c}
+                    style={[styles.chip, selectedCategory === c && styles.chipActive]}
+                    onPress={() => {
+                      setSelectedCategory(c);
+                      setSelectedSubCategory(null);
+                    }}
+                  >
+                    <Text style={[styles.chipText, selectedCategory === c && styles.chipTextActive]}>{c}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+
+              <Text style={styles.filterLabel}>Sub Kategori</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.subCatScroll}>
+                <Pressable style={[styles.chip, !selectedSubCategory && styles.chipActive]} onPress={() => setSelectedSubCategory(null)}>
+                  <Text style={[styles.chipText, !selectedSubCategory && styles.chipTextActive]}>Semua</Text>
+                </Pressable>
+                {subCategoryOptions.map((sub) => (
+                  <Pressable key={sub} style={[styles.chip, selectedSubCategory === sub && styles.chipActive]} onPress={() => setSelectedSubCategory(sub)}>
+                    <Text style={[styles.chipText, selectedSubCategory === sub && styles.chipTextActive]}>{sub}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+
+              <Text style={styles.filterLabel}>Kondisi</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.subCatScroll}>
+                <Pressable style={[styles.chip, !selectedCondition && styles.chipActive]} onPress={() => setSelectedCondition(null)}>
+                  <Text style={[styles.chipText, !selectedCondition && styles.chipTextActive]}>Semua</Text>
+                </Pressable>
+                <Pressable style={[styles.chip, selectedCondition === 'Good' && styles.chipGoodActive]} onPress={() => setSelectedCondition('Good')}>
+                  <Text style={[styles.chipText, selectedCondition === 'Good' && styles.chipTextActive]}>Good</Text>
+                </Pressable>
+                <Pressable style={[styles.chip, selectedCondition === 'Bad' && styles.chipBadActive]} onPress={() => setSelectedCondition('Bad')}>
+                  <Text style={[styles.chipText, selectedCondition === 'Bad' && styles.chipTextActive]}>Bad</Text>
+                </Pressable>
+              </ScrollView>
+            </ScrollView>
+
+            <View style={styles.filterActions}>
+              <Pressable
+                style={styles.filterResetBtn}
+                onPress={() => {
+                  setSelectedCategory(null);
+                  setSelectedSubCategory(null);
+                  setSelectedCondition(null);
+                  setDateFilterMode('day');
+                  setStartDay('');
+                  setEndDay('');
+                  setStartMonth('');
+                  setEndMonth('');
+                }}
+              >
+                <Text style={styles.filterResetText}>Reset</Text>
+              </Pressable>
+              <Pressable style={styles.filterCloseBtn} onPress={() => setFilterOpen(false)}>
+                <Text style={styles.filterCloseText}>Tutup</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -562,7 +594,25 @@ const createStyles = (colors: { background: string; card: string; text: string; 
   conditionText: { fontSize: 12, fontWeight: '900' },
   conditionTextGood: { color: '#16a34a' },
   conditionTextBad: { color: colors.danger },
-  filterSection: { marginBottom: 16 },
+  filterToggle: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: colors.card,
+    marginBottom: 12,
+  },
+  filterToggleLabel: { fontSize: 12, color: colors.muted, fontWeight: '900' },
+  filterToggleValue: { marginTop: 2, fontSize: 13, color: colors.text, fontWeight: '800' },
+  filterOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'center', alignItems: 'center', padding: 16 },
+  filterCard: { width: '100%', maxWidth: 640, backgroundColor: colors.card, borderRadius: 16, padding: 16 },
+  filterTitle: { fontSize: 16, fontWeight: '900', color: colors.text, marginBottom: 12 },
+  filterActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 14 },
+  filterResetBtn: { backgroundColor: 'rgba(42,53,71,0.08)', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14 },
+  filterResetText: { color: colors.text, fontWeight: '900' },
+  filterCloseBtn: { backgroundColor: colors.primary, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14 },
+  filterCloseText: { color: '#fff', fontWeight: '900' },
   filterLabel: { marginTop: 8, marginBottom: 6, color: colors.muted, fontSize: 12, fontWeight: '800' },
   modeRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
   modeBtn: {
