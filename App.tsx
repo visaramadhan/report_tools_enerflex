@@ -76,11 +76,8 @@ function AppInner() {
       );
     }
 
-    if (user.role === 'technician') {
-      return <TechnicianNavigator token={token} onLogout={logout} />;
-    }
-
-    return <AdminNavigator token={token} onLogout={logout} />;
+    if (user.role === 'admin') return <AdminNavigator token={token} onLogout={logout} />;
+    return <TechnicianNavigator token={token} onLogout={logout} />;
   })();
 
   const icon = mode === 'system' ? faCircleHalfStroke : resolved === 'dark' ? faSun : faMoon;
