@@ -22,9 +22,17 @@ function isLocalAddress(url: string) {
   );
 }
 
+function enforceHttpsOnWeb(url: string) {
+  if (Platform.OS !== 'web' || typeof window === 'undefined') return url;
+  if (window.location.protocol !== 'https:') return url;
+  if (!url.startsWith('http://')) return url;
+  if (isLocalAddress(url)) return url;
+  return url.replace(/^http:\/\//i, 'https://');
+}
+
 export async function resolveApiBaseUrl() {
   const env = process.env.EXPO_PUBLIC_API_URL;
-  if (env) return normalizeBaseUrl(env);
+  if (env) return enforceHttpsOnWeb(normalizeBaseUrl(env));
 
   if (!loaded) {
     loaded = true;
@@ -34,17 +42,17 @@ export async function resolveApiBaseUrl() {
       if (normalized && !isLocalAddress(normalized)) cachedBaseUrl = normalized;
     }
   }
-  if (cachedBaseUrl) return cachedBaseUrl;
+  if (cachedBaseUrl) return enforceHttpsOnWeb(cachedBaseUrl);
 
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
     // Check if we are on localhost
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       return 'http://localhost:3001';
     }
-    return `http://${window.location.hostname}:3001`;
+    return window.location.origin.replace(/\/+$/, '');
   }
 
-  return defaultBaseUrl;
+  return enforceHttpsOnWeb(defaultBaseUrl);
 }
 
 export async function getApiBaseUrlForDisplay() {
