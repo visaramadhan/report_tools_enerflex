@@ -348,7 +348,7 @@ export default function AdminToolsScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const baseStyles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F7FA', padding: 16 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6, marginBottom: 12 },
   title: { fontSize: 22, color: '#2A3547', textTransform: 'uppercase', fontFamily: 'Montserrat_800ExtraBold' },
@@ -439,3 +439,5 @@ const styles = StyleSheet.create({
   primaryActionBtn: { backgroundColor: '#16a34a', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14 },
   primaryActionText: { color: '#fff', fontWeight: '900' },
 });
+
+const createStyles = (_colors: { muted: string }) => baseStyles;
