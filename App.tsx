@@ -31,8 +31,10 @@ function AppInner() {
       try {
         const t = await getToken();
         if (!t) return;
-        const me = await apiRequest<{ user: User }>('/api/mobile/me', { token: t });
-        setTokenState(t);
+        const me = await apiRequest<{ user: User; token?: string }>('/api/mobile/me', { token: t });
+        const nextToken = me.token || t;
+        if (nextToken !== t) await setToken(nextToken);
+        setTokenState(nextToken);
         setUser(me.user);
       } catch {
         await clearToken();
