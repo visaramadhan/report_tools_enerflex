@@ -4,6 +4,7 @@
   "outputDirectory": "dist",
   "routes": [
     { "src": "/api/(.*)", "dest": "https://tools-report.vercel.app/api/$1" },
+    { "src": "/uploads/(.*)", "dest": "https://tools-report.vercel.app/uploads/$1" },
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]

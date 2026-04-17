@@ -46,8 +46,8 @@ function Tabs({ token, onLogout, onOpenReport, onOpenReturnOld }: Props & { onOp
         tabBarStyle: {
           backgroundColor: colors.card,
           borderTopWidth: 0,
-          height: 64 + insets.bottom,
-          paddingBottom: Math.max(insets.bottom, 8),
+          height: 72 + insets.bottom,
+          paddingBottom: Math.max(insets.bottom, 14),
           paddingTop: 8,
           shadowColor: 'rgba(0,0,0,0.25)',
           shadowOffset: { width: 0, height: -10 },

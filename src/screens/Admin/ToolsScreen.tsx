@@ -359,7 +359,7 @@ const baseStyles = StyleSheet.create({
   secondaryText: { fontWeight: '900', color: '#0E5E7E' },
   input: { borderWidth: 1, borderColor: 'rgba(42,53,71,0.12)', borderRadius: 12, padding: 12, backgroundColor: '#fff', marginBottom: 12 },
   filterLabel: { marginBottom: 6, color: '#6b7280', fontSize: 12, fontWeight: '800' },
-  subCatScroll: { flexDirection: 'row', paddingVertical: 4, marginBottom: 12 },
+  subCatScroll: { flexDirection: 'row', paddingVertical: 4, marginBottom: 16 },
   chip: {
     paddingHorizontal: 14,
     paddingVertical: 10,
