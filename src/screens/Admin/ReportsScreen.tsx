@@ -6,7 +6,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { apiRequest, getApiBaseUrlForDisplay } from '../../api/client';
 import { Report } from '../../types';
 import { useAppTheme } from '../../theme';
-import { exportReportsPdfWeb } from '../../utils/pdfExport';
 
 type Props = {
   token: string;
@@ -263,6 +262,7 @@ export default function AdminReportsScreen({ token, onCreateReport }: Props) {
         suffixParts.push('all');
       }
       const fileName = `Enerflex_Asset_Riwayat_Report_${suffixParts.join('__')}.pdf`;
+      const { exportReportsPdfWeb } = require('../../utils/pdfExport.web');
       exportReportsPdfWeb({
         title: 'Enerflex Asset',
         subtitle: mode === 'filtered' ? 'Riwayat Report (Filter)' : 'Riwayat Report (Semua)',

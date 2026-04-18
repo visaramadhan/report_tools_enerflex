@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faCamera, faChevronDown, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { apiRequest } from '../../api/client';
 import { Report, Tool } from '../../types';
+import { IMAGE_MEDIA_TYPES } from '../../utils/imagePicker';
 
 type Props = {
   token: string;
@@ -67,7 +68,7 @@ export default function AdminReportFormScreen({ token, toolId: initialToolId, on
       return;
     }
     const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: IMAGE_MEDIA_TYPES,
       allowsMultipleSelection: true,
       quality: 0.7,
     });

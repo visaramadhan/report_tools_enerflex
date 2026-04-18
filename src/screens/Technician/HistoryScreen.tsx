@@ -6,7 +6,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { apiRequest, getApiBaseUrlForDisplay } from '../../api/client';
 import { Report } from '../../types';
 import { useAppTheme } from '../../theme';
-import { exportReportsPdfWeb } from '../../utils/pdfExport';
 
 type Props = {
   token: string;
@@ -145,6 +144,7 @@ export default function HistoryScreen({ token }: Props) {
         ? (dateFilterMode === 'day' ? `day_${startDay || 'all'}_${endDay || 'all'}` : `month_${startMonth || 'all'}_${endMonth || 'all'}`)
         : 'all';
       const fileName = `Enerflex_Asset_Riwayat_Report_${suffix}.pdf`;
+      const { exportReportsPdfWeb } = require('../../utils/pdfExport.web');
       exportReportsPdfWeb({
         title: 'Enerflex Asset',
         subtitle: mode === 'filtered' ? 'Riwayat Report (Filter)' : 'Riwayat Report (Semua)',

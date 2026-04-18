@@ -6,6 +6,7 @@ import { faImage } from '@fortawesome/free-solid-svg-icons';
 import { apiRequest, getApiBaseUrlForDisplay } from '../../api/client';
 import { Replacement, Tool, Transfer } from '../../types';
 import { useAppTheme } from '../../theme';
+import { IMAGE_MEDIA_TYPES } from '../../utils/imagePicker';
 
 type Props = {
   token: string;
@@ -137,12 +138,12 @@ export default function ToolsScreen({ token, onOpenReport, onOpenReturnOld, onLo
   const pickTransferPhoto = useCallback(async () => {
     const res = await (Platform.OS === 'web'
       ? ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          mediaTypes: IMAGE_MEDIA_TYPES,
           allowsEditing: true,
           quality: 0.7,
         })
       : ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: IMAGE_MEDIA_TYPES,
       allowsEditing: true,
       quality: 0.7,
     }));
@@ -199,7 +200,11 @@ export default function ToolsScreen({ token, onOpenReport, onOpenReturnOld, onLo
       notify('Berhasil', `Transfer dibuat (ID: ${result.transferId}).\nDikirim ke: ${toName}\nMenunggu teknisi tujuan menerima tools.`);
       await load();
     } catch (e: any) {
-      const msg = e?.message || 'Gagal transfer';
+      const serverDetail =
+        e?.detail && typeof e.detail === 'object' && (e.detail as any).body && typeof (e.detail as any).body === 'object' && 'detail' in ((e.detail as any).body as any)
+          ? `\n${String(((e.detail as any).body as any).detail)}`
+          : '';
+      const msg = `${e?.message || 'Gagal transfer'}${serverDetail}`;
       setTransferError(msg);
       notify('Gagal', msg);
     } finally {
@@ -218,12 +223,12 @@ export default function ToolsScreen({ token, onOpenReport, onOpenReturnOld, onLo
   const pickAcceptPhoto = useCallback(async () => {
     const res = await (Platform.OS === 'web'
       ? ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          mediaTypes: IMAGE_MEDIA_TYPES,
           allowsEditing: true,
           quality: 0.7,
         })
       : ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: IMAGE_MEDIA_TYPES,
       allowsEditing: true,
       quality: 0.7,
     }));
@@ -273,12 +278,12 @@ export default function ToolsScreen({ token, onOpenReport, onOpenReturnOld, onLo
   const pickReturnPhoto = useCallback(async () => {
     const res = await (Platform.OS === 'web'
       ? ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          mediaTypes: IMAGE_MEDIA_TYPES,
           allowsEditing: true,
           quality: 0.7,
         })
       : ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: IMAGE_MEDIA_TYPES,
       allowsEditing: true,
       quality: 0.7,
     }));

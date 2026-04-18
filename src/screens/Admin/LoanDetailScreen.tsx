@@ -3,6 +3,7 @@ import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, Vi
 import * as ImagePicker from 'expo-image-picker';
 import { apiRequest } from '../../api/client';
 import { Loan, Tool } from '../../types';
+import { IMAGE_MEDIA_TYPES } from '../../utils/imagePicker';
 
 type Props = {
   token: string;
@@ -78,7 +79,7 @@ export default function AdminLoanDetailScreen({ token, loan: initialLoan, onDone
 
   const pickImage = async (toolId: string) => {
     const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: IMAGE_MEDIA_TYPES,
       allowsEditing: true,
       quality: 0.5,
     });
@@ -90,7 +91,7 @@ export default function AdminLoanDetailScreen({ token, loan: initialLoan, onDone
 
   const pickVerifyPhoto = async () => {
     const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: IMAGE_MEDIA_TYPES,
       allowsEditing: true,
       quality: 0.6,
     });

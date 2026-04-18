@@ -4,6 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { apiRequest } from '../../api/client';
 import { Report, Tool } from '../../types';
 import { useAppTheme } from '../../theme';
+import { IMAGE_MEDIA_TYPES } from '../../utils/imagePicker';
 
 type Props = {
   token: string;
@@ -57,7 +58,7 @@ export default function ReportScreen({ token, initialTool, onDone }: Props) {
       return;
     }
     const res = await ImagePicker.launchImageLibraryAsync({ 
-      mediaTypes: ImagePicker.MediaTypeOptions.Images, 
+      mediaTypes: IMAGE_MEDIA_TYPES, 
       allowsMultipleSelection: true,
       quality: 0.7 
     });

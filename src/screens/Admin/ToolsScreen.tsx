@@ -6,6 +6,7 @@ import { faFileLines, faHistory, faImage, faPenToSquare, faTrash } from '@fortaw
 import { apiRequest, getApiBaseUrlForDisplay } from '../../api/client';
 import { Tool } from '../../types';
 import { useAppTheme } from '../../theme';
+import { IMAGE_MEDIA_TYPES } from '../../utils/imagePicker';
 
 type Props = {
   token: string;
@@ -109,7 +110,7 @@ export default function AdminToolsScreen({
       return;
     }
     const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: IMAGE_MEDIA_TYPES,
       allowsEditing: true,
       quality: 0.8,
     });

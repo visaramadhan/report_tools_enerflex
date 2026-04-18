@@ -3,6 +3,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import * as ImagePicker from 'expo-image-picker';
 import { apiRequest } from '../../api/client';
 import { Category, SubCategory, Tool } from '../../types';
+import { IMAGE_MEDIA_TYPES } from '../../utils/imagePicker';
 
 type Props = {
   token: string;
@@ -107,7 +108,7 @@ export default function AdminToolFormScreen({ token, toolId, onDone }: Props) {
       Alert.alert('Izin', 'Izin galeri diperlukan');
       return;
     }
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.7 });
+    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: IMAGE_MEDIA_TYPES, quality: 0.7 });
     if (!res.canceled && res.assets[0]) setPhoto(res.assets[0]);
   };
 

@@ -3,6 +3,7 @@ import { Alert, FlatList, Image, Modal, Platform, Pressable, StyleSheet, Text, T
 import * as ImagePicker from 'expo-image-picker';
 import { apiRequest } from '../api/client';
 import { Tool } from '../types';
+import { IMAGE_MEDIA_TYPES } from '../utils/imagePicker';
 
 type Props = {
   token: string;
@@ -63,7 +64,7 @@ export default function ShipReplacementModal({
 
   const pickPhoto = useCallback(async () => {
     const res = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: IMAGE_MEDIA_TYPES,
       allowsEditing: true,
       quality: 0.7,
     });
@@ -213,4 +214,3 @@ const styles = StyleSheet.create({
   submitText: { color: '#fff', fontWeight: '900' },
   disabled: { opacity: 0.7 },
 });
-

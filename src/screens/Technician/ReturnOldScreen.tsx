@@ -4,6 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { apiRequest } from '../../api/client';
 import { Replacement } from '../../types';
 import { useAppTheme } from '../../theme';
+import { IMAGE_MEDIA_TYPES } from '../../utils/imagePicker';
 
 type Props = {
   token: string;
@@ -25,7 +26,7 @@ export default function ReturnOldScreen({ token, replacement, onDone }: Props) {
       Alert.alert('Izin', 'Izin galeri diperlukan');
       return;
     }
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.7 });
+    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: IMAGE_MEDIA_TYPES, quality: 0.7 });
     if (!res.canceled && res.assets[0]) setPhoto(res.assets[0]);
   };
 
