@@ -47,7 +47,11 @@ export default function LoginScreen({ onLoggedIn }: Props) {
       onLoggedIn(res.token, res.user);
     } catch (e: any) {
       const detailUrl = e?.detail?.url ? `\n${String(e.detail.url)}` : '';
-      const msg = `${e?.message || 'Login gagal'}${detailUrl}`;
+      const needSeed = Boolean(e?.detail?.needSeed);
+      const seedHint = needSeed
+        ? `\nBelum ada user di database.\nBuka: ${baseUrlDraft.replace(/\/+$/, '')}/api/seed?key=SEED_KEY`
+        : '';
+      const msg = `${e?.message || 'Login gagal'}${seedHint}${detailUrl}`;
       setError(msg);
       if (Platform.OS !== 'web') Alert.alert('Gagal', msg);
     } finally {

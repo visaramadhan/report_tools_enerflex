@@ -30,9 +30,17 @@ function statusText(status: string) {
 export default function ToolsScreen({ token, onOpenReport, onOpenReturnOld, onLogout }: Props) {
   const { colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const notify = useCallback((title: string, message: string) => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.alert(`${title}\n\n${message}`);
+      return;
+    }
+    Alert.alert(title, message);
+  }, []);
   const [tools, setTools] = useState<Tool[]>([]);
   const [replacements, setReplacements] = useState<Replacement[]>([]);
   const [incomingTransfers, setIncomingTransfers] = useState<Transfer[]>([]);
+  const [outgoingTransfers, setOutgoingTransfers] = useState<Transfer[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [apiBaseUrl, setApiBaseUrl] = useState('');
@@ -58,14 +66,16 @@ export default function ToolsScreen({ token, onOpenReport, onOpenReturnOld, onLo
   const [submittingAcceptTransfer, setSubmittingAcceptTransfer] = useState(false);
 
   const load = useCallback(async () => {
-    const [t, r, tr] = await Promise.all([
+    const [t, r, trIn, trOut] = await Promise.all([
       apiRequest<Tool[]>('/api/mobile/tools/mine', { token }),
       apiRequest<Replacement[]>('/api/mobile/replacements', { token }),
       apiRequest<Transfer[]>('/api/mobile/transfers?type=incoming', { token }),
+      apiRequest<Transfer[]>('/api/mobile/transfers?type=outgoing', { token }),
     ]);
     setTools(t);
     setReplacements(r.filter((x) => x.status !== 'Completed' && x.status !== 'Rejected'));
-    setIncomingTransfers(tr.filter((x) => x.status === 'Pending'));
+    setIncomingTransfers(trIn.filter((x) => x.status === 'Pending'));
+    setOutgoingTransfers(trOut.filter((x) => x.status === 'Pending'));
   }, [token]);
 
   useEffect(() => {
@@ -76,12 +86,12 @@ export default function ToolsScreen({ token, onOpenReport, onOpenReturnOld, onLo
         setApiBaseUrl(baseUrl);
         await load();
       } catch (e: any) {
-        Alert.alert('Gagal', e?.message || 'Gagal memuat data');
+        notify('Gagal', e?.message || 'Gagal memuat data');
       } finally {
         setLoading(false);
       }
     })();
-  }, [load]);
+  }, [load, notify]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -96,9 +106,9 @@ export default function ToolsScreen({ token, onOpenReport, onOpenReturnOld, onLo
     try {
       await apiRequest(`/api/mobile/replacements/${id}/accept`, { method: 'PUT', token });
       await load();
-      Alert.alert('Berhasil', 'Tools pengganti diterima');
+      notify('Berhasil', 'Tools pengganti diterima');
     } catch (e: any) {
-      Alert.alert('Gagal', e?.message || 'Gagal');
+      notify('Gagal', e?.message || 'Gagal');
     }
   };
 
@@ -142,15 +152,15 @@ export default function ToolsScreen({ token, onOpenReport, onOpenReturnOld, onLo
   const submitTransfer = useCallback(async () => {
     if (!transferTool) return;
     if (!transferToId) {
-      Alert.alert('Validasi', 'Peminjam baru wajib dipilih');
+      notify('Validasi', 'Peminjam baru wajib dipilih');
       return;
     }
     if (!transferNote.trim()) {
-      Alert.alert('Validasi', 'Keterangan/No. Resi wajib diisi');
+      notify('Validasi', 'Keterangan/No. Resi wajib diisi');
       return;
     }
     if (!transferPhoto?.uri) {
-      Alert.alert('Validasi', 'Foto terakhir wajib diambil');
+      notify('Validasi', 'Foto terakhir wajib diupload');
       return;
     }
     if (submittingTransfer) return;
@@ -182,23 +192,20 @@ export default function ToolsScreen({ token, onOpenReport, onOpenReturnOld, onLo
         fd.append('photo', { uri: transferPhoto.uri, name: transferPhoto.fileName || `transfer-${Date.now()}.jpg`, type: transferPhoto.mimeType || 'image/jpeg' } as any);
       }
 
-      await apiRequest(`/api/mobile/tools/${transferTool._id}/transfer`, { method: 'POST', token, body: fd });
+      const result = await apiRequest<{ transferId: string }>(`/api/mobile/tools/${transferTool._id}/transfer`, { method: 'POST', token, body: fd });
       setTransferOpen(false);
       setTransferTool(null);
-      Alert.alert('Berhasil', 'Transfer dibuat. Menunggu teknisi tujuan menerima tools.');
+      const toName = technicians.find((t) => t.id === transferToId)?.name || 'teknisi tujuan';
+      notify('Berhasil', `Transfer dibuat (ID: ${result.transferId}).\nDikirim ke: ${toName}\nMenunggu teknisi tujuan menerima tools.`);
       await load();
     } catch (e: any) {
       const msg = e?.message || 'Gagal transfer';
       setTransferError(msg);
-      if (Platform.OS === 'web' && typeof window !== 'undefined') {
-        window.alert(msg);
-      } else {
-        Alert.alert('Gagal', msg);
-      }
+      notify('Gagal', msg);
     } finally {
       setSubmittingTransfer(false);
     }
-  }, [load, submittingTransfer, token, transferCondition, transferNote, transferPhoto, transferToId, transferTool]);
+  }, [load, notify, submittingTransfer, technicians, token, transferCondition, transferNote, transferPhoto, transferToId, transferTool]);
 
   const openAcceptTransfer = useCallback((item: Transfer) => {
     setAcceptTransferItem(item);
@@ -226,7 +233,7 @@ export default function ToolsScreen({ token, onOpenReport, onOpenReturnOld, onLo
   const submitAcceptTransfer = useCallback(async () => {
     if (!acceptTransferItem) return;
     if (!acceptPhoto?.uri) {
-      Alert.alert('Validasi', 'Foto saat diterima wajib diambil');
+      notify('Validasi', 'Foto saat diterima wajib diupload');
       return;
     }
     if (submittingAcceptTransfer) return;
@@ -255,14 +262,14 @@ export default function ToolsScreen({ token, onOpenReport, onOpenReturnOld, onLo
       await apiRequest(`/api/mobile/transfers/${acceptTransferItem._id}/accept`, { method: 'PUT', token, body: fd });
       setAcceptTransferOpen(false);
       setAcceptTransferItem(null);
-      Alert.alert('Berhasil', 'Tools diterima dan sekarang aktif dipinjam oleh Anda');
+      notify('Berhasil', 'Tools diterima dan sekarang aktif dipinjam oleh Anda');
       await load();
     } catch (e: any) {
-      Alert.alert('Gagal', e?.message || 'Gagal menerima transfer');
+      notify('Gagal', e?.message || 'Gagal menerima transfer');
     } finally {
       setSubmittingAcceptTransfer(false);
     }
-  }, [acceptCondition, acceptNote, acceptPhoto, acceptTransferItem, load, submittingAcceptTransfer, token]);
+  }, [acceptCondition, acceptNote, acceptPhoto, acceptTransferItem, load, notify, submittingAcceptTransfer, token]);
   const pickReturnPhoto = useCallback(async () => {
     const res = await (Platform.OS === 'web'
       ? ImagePicker.launchImageLibraryAsync({
@@ -347,7 +354,7 @@ export default function ToolsScreen({ token, onOpenReport, onOpenReturnOld, onLo
       </View>
 
       <FlatList
-        data={[{ key: 'tools' }, { key: 'incomingTransfers' }, { key: 'replacements' }] as const}
+        data={[{ key: 'tools' }, { key: 'outgoingTransfers' }, { key: 'incomingTransfers' }, { key: 'replacements' }] as const}
         keyExtractor={(i) => i.key}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         contentContainerStyle={styles.list}
@@ -405,6 +412,29 @@ export default function ToolsScreen({ token, onOpenReport, onOpenReturnOld, onLo
                     </View>
                     );
                   })
+                )}
+              </View>
+            );
+          }
+
+          if (item.key === 'outgoingTransfers') {
+            return (
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>Transfer Keluar</Text>
+                {outgoingTransfers.length === 0 ? (
+                  <Text style={styles.muted}>Tidak ada transfer keluar</Text>
+                ) : (
+                  outgoingTransfers.map((tr) => (
+                    <View key={tr._id} style={styles.repl}>
+                      <Text style={styles.replTitle}>
+                        <Text style={styles.code}>{tr.toolCode}</Text> {tr.toolName}
+                      </Text>
+                      <Text style={styles.replSub}>Ke: {tr.toTechnicianName}</Text>
+                      <Text style={styles.replSub}>Kondisi Kirim: {tr.condition}</Text>
+                      {tr.description ? <Text style={styles.muted}>Resi/Keterangan: {tr.description}</Text> : null}
+                      <Text style={styles.muted}>Status: Pending (menunggu diterima)</Text>
+                    </View>
+                  ))
                 )}
               </View>
             );
