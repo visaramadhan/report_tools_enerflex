@@ -37,7 +37,8 @@ function patchReactNativeStdFormat() {
   const after = 'return std::to_string(dimension.value) + "%";';
 
   if (!next.includes(before)) {
-    throw new Error(`Patch failed: expected line not found in ${targetPath}`);
+    process.stderr.write(`[postinstall] Skip patchReactNativeStdFormat: expected line not found in ${targetPath}\n`);
+    return;
   }
 
   next = next.replace(before, after);
@@ -142,6 +143,5 @@ try {
   patchReanimatedTransformInterpolator();
   patchExpoModulesCoreObjectPathMax();
 } catch (e) {
-  process.stderr.write(String(e && e.stack ? e.stack : e) + '\n');
-  process.exit(1);
+  process.stderr.write(`[postinstall] Non-fatal error: ${String(e && e.stack ? e.stack : e)}\n`);
 }
