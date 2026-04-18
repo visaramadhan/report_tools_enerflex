@@ -49,6 +49,7 @@ export default function ToolsScreen({ token, onOpenReport, onOpenReturnOld, onLo
   const [transferNote, setTransferNote] = useState('');
   const [transferPhoto, setTransferPhoto] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [submittingTransfer, setSubmittingTransfer] = useState(false);
+  const [transferError, setTransferError] = useState('');
   const [acceptTransferOpen, setAcceptTransferOpen] = useState(false);
   const [acceptTransferItem, setAcceptTransferItem] = useState<Transfer | null>(null);
   const [acceptCondition, setAcceptCondition] = useState<'Good' | 'Bad'>('Good');
@@ -124,11 +125,17 @@ export default function ToolsScreen({ token, onOpenReport, onOpenReturnOld, onLo
   }, [token]);
 
   const pickTransferPhoto = useCallback(async () => {
-    const res = await ImagePicker.launchCameraAsync({
+    const res = await (Platform.OS === 'web'
+      ? ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          quality: 0.7,
+        })
+      : ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       quality: 0.7,
-    });
+    }));
     if (!res.canceled && res.assets && res.assets.length > 0) setTransferPhoto(res.assets[0]);
   }, []);
 
@@ -148,6 +155,7 @@ export default function ToolsScreen({ token, onOpenReport, onOpenReturnOld, onLo
     }
     if (submittingTransfer) return;
     setSubmittingTransfer(true);
+    setTransferError('');
     try {
       const fd = new FormData();
       fd.append('toTechnicianId', transferToId);
@@ -161,7 +169,11 @@ export default function ToolsScreen({ token, onOpenReport, onOpenReturnOld, onLo
         if (directFile instanceof File) {
           file = new File([directFile], directFile.name || name, { type: directFile.type || transferPhoto.mimeType || 'image/jpeg' });
         } else {
-          const fetched = await fetch(transferPhoto.uri);
+          const uri = String(transferPhoto.uri || '');
+          if (!uri || uri.startsWith('file:')) {
+            throw new Error('Foto tidak terbaca di web. Silakan pilih dari file (Upload) bukan kamera.');
+          }
+          const fetched = await fetch(uri);
           const blob = await fetched.blob();
           file = new File([blob], name, { type: blob.type || transferPhoto.mimeType || 'image/jpeg' });
         }
@@ -176,7 +188,13 @@ export default function ToolsScreen({ token, onOpenReport, onOpenReturnOld, onLo
       Alert.alert('Berhasil', 'Transfer dibuat. Menunggu teknisi tujuan menerima tools.');
       await load();
     } catch (e: any) {
-      Alert.alert('Gagal', e?.message || 'Gagal transfer');
+      const msg = e?.message || 'Gagal transfer';
+      setTransferError(msg);
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.alert(msg);
+      } else {
+        Alert.alert('Gagal', msg);
+      }
     } finally {
       setSubmittingTransfer(false);
     }
@@ -191,11 +209,17 @@ export default function ToolsScreen({ token, onOpenReport, onOpenReturnOld, onLo
   }, []);
 
   const pickAcceptPhoto = useCallback(async () => {
-    const res = await ImagePicker.launchCameraAsync({
+    const res = await (Platform.OS === 'web'
+      ? ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          quality: 0.7,
+        })
+      : ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       quality: 0.7,
-    });
+    }));
     if (!res.canceled && res.assets && res.assets.length > 0) setAcceptPhoto(res.assets[0]);
   }, []);
 
@@ -240,11 +264,17 @@ export default function ToolsScreen({ token, onOpenReport, onOpenReturnOld, onLo
     }
   }, [acceptCondition, acceptNote, acceptPhoto, acceptTransferItem, load, submittingAcceptTransfer, token]);
   const pickReturnPhoto = useCallback(async () => {
-    const res = await ImagePicker.launchCameraAsync({
+    const res = await (Platform.OS === 'web'
+      ? ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          quality: 0.7,
+        })
+      : ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       quality: 0.7,
-    });
+    }));
     if (!res.canceled && res.assets && res.assets.length > 0) {
       setReturnPhoto(res.assets[0]);
     }
@@ -476,6 +506,7 @@ export default function ToolsScreen({ token, onOpenReport, onOpenReturnOld, onLo
             <Text style={styles.modalMeta} numberOfLines={2}>
               {transferTool ? `${transferTool.toolCode} - ${transferTool.name}` : ''}
             </Text>
+            {transferError ? <Text style={styles.errorText}>{transferError}</Text> : null}
 
             <Text style={styles.modalLabel}>Peminjam Baru</Text>
             <ScrollView style={{ maxHeight: 180 }} nestedScrollEnabled>
@@ -595,6 +626,7 @@ const createStyles = (colors: { background: string; card: string; text: string; 
     modalCard: { width: '100%', maxWidth: 520, backgroundColor: colors.card, borderRadius: 16, padding: 16 },
     modalTitle: { fontSize: 18, fontWeight: '900', color: colors.text },
     modalMeta: { marginTop: 6, color: colors.muted, fontWeight: '700' },
+    errorText: { marginTop: 10, color: colors.danger, fontWeight: '800' },
     modalLabel: { marginTop: 14, marginBottom: 8, color: colors.muted, fontSize: 12, fontWeight: '900' },
     modalInput: { backgroundColor: colors.inputBg, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 12, color: colors.text },
     photoBtn: { backgroundColor: colors.primary, borderRadius: 12, paddingVertical: 10, alignItems: 'center' },
